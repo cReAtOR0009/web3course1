@@ -1,178 +1,272 @@
+// Import necessary dependencies from React and ethers
 import { useState, useEffect, createContext, useContext } from "react";
-import {ethers} from "ethers";
+import { ethers } from "ethers";
 
-import {contractABI, contractAddress} from "../utils/constants"
+// Import contract ABI and address from constants
+import { contractABI, contractAddress } from "../utils/constants";
 
+// Create a context for managing transaction-related state
 export const TransactionContext = createContext();
 
+// Destructure the 'ethereum' object from the global window object
 const { ethereum } = window;
 
+// Function to get an Ethereum contract instance
 const getEthereumContract = () => {
-    const provider =  new ethers.providers.Web3Provider(ethereum)
-    const signer = provider.getSigner();
-    const transactionContract = new ethers.Contract(contractAddress, contractABI, signer)
+  // Create a Web3Provider using the 'ethereum' object
+  const provider = new ethers.providers.Web3Provider(ethereum);
 
-    return transactionContract
+  // Get the signer from the provider
+  const signer = provider.getSigner();
 
-    // console.log(provider, signer, transactionContract)
-}
-  
-export const TransactionProvider = ({children}) => {
+  // Create a contract instance using the ABI, address, and signer
+  const transactionContract = new ethers.Contract(
+    contractAddress,
+    contractABI,
+    signer
+  );
 
-    const [currentAccount, setcurrentAccount] = useState("");
-    const [formData, setformData] = useState({adressTo:"", amount:"", keyword:"", message:"" })
-    const [isLoading, setIsLoading] = useState(false)
-    const [transactionCount, setTransactionCount] = useState(localStorage.getItem("transactionCount"))
-    const [transactions, setTransactions] =  useState([])
-    const [isScrolled, setIsScrolled] = useState(false);
-    const [isDarkTheme, setIsDarkTheme] = useState(false);
-    const [isActive, setIsactive] = useState("Home")
-    const testContext = "working context"
-    // console.log("isActive: ", isActive)
+  // Return the contract instance
+  return transactionContract;
 
-    const toggleTheme = () => {
-        setIsDarkTheme((prev) => !prev);
-      };
+  // console.log(provider, signer, transactionContract)
+};
 
-    const handleScroll = () => {
-        const scrolled = window.scrollY > 0;
-        setIsScrolled(scrolled);
-        window.addEventListener('scroll', handleScroll);
+export const TransactionProvider = ({ children }) => {
+  const [currentAccount, setcurrentAccount] = useState("");
+  const [formData, setformData] = useState({
+    adressTo: "",
+    amount: "",
+    keyword: "",
+    message: "",
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [transactionCount, setTransactionCount] = useState(
+    localStorage.getItem("transactionCount")
+  );
+  const [transactions, setTransactions] = useState([]);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isDarkTheme, setIsDarkTheme] = useState(false);
+  const [isActive, setIsactive] = useState("Home");
+  const testContext = "working context";
+  // console.log("isActive: ", isActive)
 
-        return () => {
-          window.removeEventListener('scroll', handleScroll);
-        }
+ // Theme toggle function
+ const toggleTheme = () => {
+    setIsDarkTheme((prev) => !prev);
+  };
+
+  const handleScroll = () => {
+    // Check if the user has scrolled beyond the top of the page
+    const scrolled = window.scrollY > 0;
+
+    // Update the state 'isScrolled' based on the scroll position
+    setIsScrolled(scrolled);
+
+    // Add an event listener for the 'scroll' event on the window
+    window.addEventListener("scroll", handleScroll);
+
+    // Return a cleanup function to remove the event listener when the component unmounts
+    return () => {
+        window.removeEventListener("scroll", handleScroll);
+    };
+};
+
+
+  const handleChange = (e, name) => {
+    setformData((prevState) => ({ ...prevState, [name]: e.target.value }));
+  };
+
+  const getAllTransactions = async () => {
+    try {
+        // Check if the 'ethereum' object is available (Metamask is installed)
+        if (!ethereum) return alert("Please install Metamask");
+
+        // Get an instance of the Ethereum smart contract
+        const transactionContract = getEthereumContract();
+
+        // Fetch all transactions from the smart contract
+        const availableTransactions = await transactionContract.getAllTransactions();
+
+        // Map and structure the transactions for better representation
+        const structuredTransactions = availableTransactions.map((transaction) => ({
+            addressTo: transaction.receiver,
+            addressFrom: transaction.sender,
+            timeStamp: new Date(transaction.timestamp.toNumber() * 1000).toLocaleString(),
+            message: transaction.message,
+            keyword: transaction.keyword,
+            amount: parseInt(transaction.amount._hex) / 10 ** 18,
+        }));
+
+        // Log the structured transactions to the console
+        console.log(structuredTransactions);
+
+        // Set the state with the structured transactions
+        setTransactions(structuredTransactions);
+    } catch (error) {
+        // Log any errors that occur during the process
+        console.log(error);
     }
+};
 
-    const handleChange = (e, name) => {
-        setformData((prevState) => ({...prevState, [name]:e.target.value}))
+  const checkIfWalletIsConnected = async () => {
+    try {
+      // Check if the 'ethereum' object is available (Metamask is installed)
+      if (!ethereum) return alert("Please install Metamask");
+
+      // Request user accounts from Metamask
+      const accounts = await ethereum.request({ method: "eth_accounts" });
+    //   console.log(accounts);
+
+      // Check if any accounts are available
+      if (accounts.length) {
+        // Set the current account state with the first account from the response
+        setcurrentAccount(accounts[0]);
+
+        // Fetch all transactions for the connected account
+        getAllTransactions();
+      } else {
+        console.log("No accounts found");
+      }
+    } catch (error) {
+      // Log any errors that occur during the process
+      console.log(error);
+
+      // Throw a custom error indicating a problem with the Ethereum object
+      throw new Error("No Ethereum Object");
     }
+  };
 
-    const getAllTransactions =async () => {
-        try {
-            if(!ethereum) return alert ("please install meatamask")
+  const checkIfTransactionsExist = async () => {
+    try {
+      // Get an instance of the Ethereum smart contract
+      const transactionContract = getEthereumContract();
 
-            const transactionContract = getEthereumContract()
-            const availableTransactions = await transactionContract.getAllTransactions()
+      // Retrieve the total count of transactions from the smart contract
+      const transactionCount = await transactionContract.getTransactionsCount();
 
-            const structuredTransactions= availableTransactions.map((transaction) => ({
-                addressTo:transaction.receiver,
-                addressFrom: transaction.sender,
-                timeStamp:new Date(transaction.timestamp.toNumber() * 1000).toLocaleString(),
-                message:transaction.message,
-                keyword:transaction.keyword,
-                amount:parseInt(transaction.amount._hex) / (10 ** 18)
+      // Store the transaction count in the local storage
+      window.localStorage.setItem("transactionCount", transactionCount);
+    } catch (error) {
+      // Log any errors that occur during the process
+      console.log(error);
 
-            }))
-            console.log(structuredTransactions)
-
-            setTransactions(structuredTransactions)
-        } catch (error) {
-            console.log(error)
-        }
+      // Throw a custom error indicating a problem with the Ethereum object
+      throw new Error("No Ethereum Object");
     }
-    const checkIfWalletIsConnected = async () => {
+  };
 
-        try {
-            
-            if(!ethereum) return alert ("please install meatamask")
-    
-            const accounts = await ethereum.request({method :"eth_accounts"})
-            console.log(accounts)
+  const connectWallet = async () => {
+    try {
+      // Check if the 'ethereum' object is available (Metamask is installed)
+      if (!ethereum) return alert("Please install Metamask");
 
-            if(accounts.length) {
-                setcurrentAccount(accounts[0])
+      // Request user accounts from Metamask
+      const accounts = await ethereum.request({
+        method: "eth_requestAccounts",
+      });
 
-                getAllTransactions()
-            } else{
-                console.log("no accounts Found")
-            }
-        }
-         catch (error) {
-            console.log(error)
-            throw new Error("No Ethereum Object")
-        }
+      // Set the current account state with the first account from the response
+      setcurrentAccount(accounts[0]);
+
+      // Listen for changes in the connected accounts
+      ethereum.on("accountsChanged", (newAccounts) => {
+        // Update the current account state with the new account
+        setcurrentAccount(newAccounts[0]);
+        // Show an alert indicating the switch to the new account
+        alert(`Switched to ${newAccounts[0]}`);
+      });
+    } catch (error) {
+      // Log any errors that occur during the process
+      console.log(error);
+      // Throw a custom error indicating a problem with the Ethereum object
+      throw new Error("No Ethereum Object");
     }
+  };
 
-    const checkIfTransactionsExist = async () => {
+  const sendTransaction = async () => {
+    try {
+      // Check if the 'ethereum' object is available (Metamask is installed)
+      if (!ethereum) return alert("Please install Metamask");
 
-        try {
-            const transactionContract = getEthereumContract()
-            const transactionCount = await transactionContract.getTransactionsCount()
+      // Destructure values from the 'formData' object
+      const { addressTo, amount, keyword, message } = formData;
 
-            window.localStorage.setItem("transactionCount", transactionCount)
-        } catch (error) {
-            console.log(error)
+      // Get Ethereum smart contract instance
+      const transactionContract = getEthereumContract();
 
-            throw new Error ("no ethereum object")
-            
-        }
+      // Parse the amount to Wei using ethers.js utility
+      const parsedAmount = ethers.utils.parseEther(amount);
 
+      // Request the user to send an Ethereum transaction using Metamask
+      await ethereum.request({
+        method: "eth_sendTransaction",
+        params: [
+          {
+            from: currentAccount,
+            to: addressTo,
+            gas: "0x5208", // Gas limit
+            value: parsedAmount._hex, // Amount in hexadecimal format
+          },
+        ],
+      });
+
+      // Call the 'addToBlockchain' method on the smart contract
+      const transactionHash = await transactionContract.addToBlockchain(
+        addressTo,
+        parsedAmount,
+        message,
+        keyword
+      );
+
+      // Set loading state
+      setIsLoading(true);
+    //   console.log(`Loading - ${transactionHash.hash}`);
+
+      // Wait for the Ethereum transaction to be mined
+      await transactionHash.wait();
+
+      // Set loading state to false after successful transaction
+      setIsLoading(false);
+    //   console.log(`Success - ${transactionHash.hash}`);
+
+      // Retrieve the updated transaction count from the smart contract
+      const transactionCount = await transactionContract.getTransactionsCount();
+      setTransactionCount(transactionCount.toNumber());
+    } catch (error) {
+      console.log(error);
+      throw new Error("No Ethereum Object");
     }
+  };
 
-    const connectWallet = async () => {
-        try {
-            if(!ethereum) return alert ("please return Metamask")
+  useEffect(() => {
+    getAllTransactions();
+    checkIfWalletIsConnected();
+    checkIfTransactionsExist();
+    handleScroll();
+  }, []);
 
-            const accounts = await ethereum.request({method :"eth_requestAccounts"})
-            
-            setcurrentAccount(accounts[0])
-
-            ethereum.on('accountsChanged', (newAccounts) => {
-                setcurrentAccount(newAccounts[0]);
-                alert(`Switched to ${newAccounts[0]}`);
-              });
-
-        } catch (error) {
-            console.log(error)
-            throw new Error("No Ethereum Object")
-        }
-    }
-   
-    const sendTransaction = async () => {
-        try {
-            if(!ethereum) return alert ("please install Metamask")
-
-            const {addressTo, amount, keyword, message} = formData;
-            const transactionContract = getEthereumContract();
-            const pasrsedAmount = ethers.utils.parseEther(amount)
-
-        
-            await ethereum.request({
-                method:"eth_sendTransaction",
-                params:[{
-                    from:currentAccount,
-                    to:addressTo,
-                    gas:"0x5208",
-                    value:pasrsedAmount._hex
-                }]
-            })
-
-            const transactionHash = await transactionContract.addToBlockchain(addressTo, pasrsedAmount, message, keyword);
-
-            setIsLoading(true)
-            console.log(`Loading - ${transactionHash.hash}`)
-            await transactionHash.wait()
-            setIsLoading(false)
-            console.log(`success - ${transactionHash.hash}`) 
-
-            const transactionCount = await transactionContract.getTransactionsCount()
-            setTransactionCount(transactionCount.toNumber())
-        } catch (error) {
-            console.log(error)
-            throw new Error("No Ethereum Object")
-        }
-    }
-    useEffect(() => {
-        getAllTransactions()
-      checkIfWalletIsConnected()
-      checkIfTransactionsExist()
-      handleScroll()
-    }, [])
-    
-    return(
-        <TransactionContext.Provider value={{connectWallet, currentAccount, formData, setformData, handleChange,sendTransaction, testContext, transactions, isLoading, handleScroll, isScrolled, isDarkTheme, toggleTheme, isActive, setIsactive }}>
-            {children}
-        </TransactionContext.Provider>
-    )
-}
+  return (
+    <TransactionContext.Provider
+      value={{
+        connectWallet,
+        currentAccount,
+        formData,
+        setformData,
+        handleChange,
+        sendTransaction,
+        testContext,
+        transactions,
+        isLoading,
+        handleScroll,
+        isScrolled,
+        isDarkTheme,
+        toggleTheme,
+        isActive,
+        setIsactive,
+      }}
+    >
+      {children}
+    </TransactionContext.Provider>
+  );
+};
