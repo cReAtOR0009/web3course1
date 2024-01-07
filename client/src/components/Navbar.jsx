@@ -4,7 +4,7 @@ import { FaMoon, FaRegMoon } from "react-icons/fa";
 import { AiOutlineClose } from "react-icons/ai";
 import { TransactionContext } from "../context/TransactionContext";
 import { menuItems } from "../content";
-import { Link } from "react-router-dom";
+// import { Link } from "react-router-dom";
 
 import logo from "../../images/logo.png";
 
