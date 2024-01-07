@@ -1,13 +1,15 @@
 @import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap");
 
 
-* html {
-  padding: 0;
+* {
   margin: 0;
+  padding: 0;
   box-sizing: border-box;
+  /* border: 1px solid red; */
   scroll-behavior: smooth;
-  border: 1px solid red;
+  /* color-scheme: dark; */
 }
+
 
 body {
   margin: 0;

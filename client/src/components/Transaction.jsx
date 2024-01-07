@@ -74,4 +74,4 @@ const Transactions = () => {
   );
 };
 
-export default Wrapper (Transactions, "maketransactions");
+export default Wrapper (Transactions, "transactions");

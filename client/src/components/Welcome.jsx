@@ -129,4 +129,4 @@ const Welcome = () => {
   );
 };
 
-export default Wrapper(Welcome, "welcome");
+export default Wrapper(Welcome, "maketransactions");

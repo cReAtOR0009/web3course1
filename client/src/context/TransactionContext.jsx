@@ -28,7 +28,7 @@ export const TransactionProvider = ({children}) => {
     const [isDarkTheme, setIsDarkTheme] = useState(false);
     const [isActive, setIsactive] = useState("Home")
     const testContext = "working context"
-    console.log("isActive: ", isActive)
+    // console.log("isActive: ", isActive)
 
     const toggleTheme = () => {
         setIsDarkTheme((prev) => !prev);
@@ -164,6 +164,7 @@ export const TransactionProvider = ({children}) => {
         }
     }
     useEffect(() => {
+        getAllTransactions()
       checkIfWalletIsConnected()
       checkIfTransactionsExist()
       handleScroll()
