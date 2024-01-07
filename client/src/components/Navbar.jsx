@@ -18,7 +18,7 @@ const NavBarListItem = ({ title, route, classProps, isactive, setIsactive, onCli
 );
 
 const Navbar = () => {
-  console.log("Navbar");
+  // console.log("Navbar");
   const [toggleMenu, setToggleMenu] = useState(false);
   const {
     handleScroll,
@@ -28,7 +28,7 @@ const Navbar = () => {
     isActive,
     setIsactive,
   } = useContext(TransactionContext);
-  console.log("isActive: ", isActive);
+  // console.log("isActive: ", isActive);
 
   return (
     <nav

@@ -99,7 +99,7 @@ export const TransactionProvider = ({ children }) => {
         }));
 
         // Log the structured transactions to the console
-        console.log(structuredTransactions);
+        // console.log(structuredTransactions);
 
         // Set the state with the structured transactions
         setTransactions(structuredTransactions);
