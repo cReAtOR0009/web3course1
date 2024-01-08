@@ -51,9 +51,17 @@ export const TransactionProvider = ({ children }) => {
   const testContext = "working context";
   // console.log("isActive: ", isActive)
 
- // Theme toggle function
- const toggleTheme = () => {
+  // Theme toggle function
+  const toggleTheme = () => {
     setIsDarkTheme((prev) => !prev);
+    localStorage.setItem("Transactiontheme", JSON.stringify(!isDarkTheme));
+  };
+
+  const getTheme = () => {
+    const theme = JSON.parse(localStorage.getItem("Transactiontheme"));
+    if (theme) {
+      setIsDarkTheme(theme);
+    }
   };
 
   const handleScroll = () => {
@@ -68,10 +76,9 @@ export const TransactionProvider = ({ children }) => {
 
     // Return a cleanup function to remove the event listener when the component unmounts
     return () => {
-        window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("scroll", handleScroll);
     };
-};
-
+  };
 
   const handleChange = (e, name) => {
     setformData((prevState) => ({ ...prevState, [name]: e.target.value }));
@@ -79,35 +86,40 @@ export const TransactionProvider = ({ children }) => {
 
   const getAllTransactions = async () => {
     try {
-        // Check if the 'ethereum' object is available (Metamask is installed)
-        if (!ethereum) return alert("Please install Metamask");
+      // Check if the 'ethereum' object is available (Metamask is installed)
+      if (!ethereum) return alert("Please install Metamask");
 
-        // Get an instance of the Ethereum smart contract
-        const transactionContract = getEthereumContract();
+      // Get an instance of the Ethereum smart contract
+      const transactionContract = getEthereumContract();
 
-        // Fetch all transactions from the smart contract
-        const availableTransactions = await transactionContract.getAllTransactions();
+      // Fetch all transactions from the smart contract
+      const availableTransactions =
+        await transactionContract.getAllTransactions();
 
-        // Map and structure the transactions for better representation
-        const structuredTransactions = availableTransactions.map((transaction) => ({
-            addressTo: transaction.receiver,
-            addressFrom: transaction.sender,
-            timeStamp: new Date(transaction.timestamp.toNumber() * 1000).toLocaleString(),
-            message: transaction.message,
-            keyword: transaction.keyword,
-            amount: parseInt(transaction.amount._hex) / 10 ** 18,
-        }));
+      // Map and structure the transactions for better representation
+      const structuredTransactions = availableTransactions.map(
+        (transaction) => ({
+          addressTo: transaction.receiver,
+          addressFrom: transaction.sender,
+          timeStamp: new Date(
+            transaction.timestamp.toNumber() * 1000
+          ).toLocaleString(),
+          message: transaction.message,
+          keyword: transaction.keyword,
+          amount: parseInt(transaction.amount._hex) / 10 ** 18,
+        })
+      );
 
-        // Log the structured transactions to the console
-        // console.log(structuredTransactions);
+      // Log the structured transactions to the console
+      // console.log(structuredTransactions);
 
-        // Set the state with the structured transactions
-        setTransactions(structuredTransactions);
+      // Set the state with the structured transactions
+      setTransactions(structuredTransactions);
     } catch (error) {
-        // Log any errors that occur during the process
-        console.log(error);
+      // Log any errors that occur during the process
+      console.log(error);
     }
-};
+  };
 
   const checkIfWalletIsConnected = async () => {
     try {
@@ -116,7 +128,7 @@ export const TransactionProvider = ({ children }) => {
 
       // Request user accounts from Metamask
       const accounts = await ethereum.request({ method: "eth_accounts" });
-    //   console.log(accounts);
+      //   console.log(accounts);
 
       // Check if any accounts are available
       if (accounts.length) {
@@ -221,14 +233,14 @@ export const TransactionProvider = ({ children }) => {
 
       // Set loading state
       setIsLoading(true);
-    //   console.log(`Loading - ${transactionHash.hash}`);
+      //   console.log(`Loading - ${transactionHash.hash}`);
 
       // Wait for the Ethereum transaction to be mined
       await transactionHash.wait();
 
       // Set loading state to false after successful transaction
       setIsLoading(false);
-    //   console.log(`Success - ${transactionHash.hash}`);
+      //   console.log(`Success - ${transactionHash.hash}`);
 
       // Retrieve the updated transaction count from the smart contract
       const transactionCount = await transactionContract.getTransactionsCount();
@@ -244,6 +256,7 @@ export const TransactionProvider = ({ children }) => {
     checkIfWalletIsConnected();
     checkIfTransactionsExist();
     handleScroll();
+    getTheme();
   }, []);
 
   return (
