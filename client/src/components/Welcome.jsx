@@ -23,13 +23,14 @@ const Input = ({ placeholder, name, type, value, handleChange }) => (
 );
 
 const Welcome = () => {
-  const { connectWallet, currentAccount, formData, sendTransaction, handleChange, transactions, isLoading, isDarkTheme } = useContext(TransactionContext);
+  const { connectWallet, currentAccount, formData, sendTransaction, handleChange, getAllTransactions, isLoading, isDarkTheme } = useContext(TransactionContext);
 
   const handleSubmit = (e) => {
     const { addressTo, amount, keyword, message } = formData;
     e.preventDefault();
     if (!addressTo || !amount || !keyword || !message) return;
     sendTransaction();
+    // getAllTransactions()
   };
 
   return (
@@ -37,10 +38,10 @@ const Welcome = () => {
       <div className="flex mf:flex-row flex-col items-start  mt-[20vh] justify-between md:p-20 py-12 px-4">
         <div className="flex flex-1 justify-start items-start flex-col mf:mr-10">
           <h1 className="text-3xl sm:text-5xl text-white text-gradient py-1">
-            Send Crypto Assets onchain<br /> across the Cosmos
+            Send Crypto Assets onchain to any Address<br /> across the Cosmos
           </h1>
           <p className="text-left mt-5 text-white font-light md:w-9/12 w-11/12 text-base">
-          Discover the realm of cryptocurrency effortlessly with _Creator. Facilitate seamless buying and selling of digital assets in the crypto world.
+          Discover the realm of cryptocurrency effortlessly with _Creator. Facilitate seamless sending of digital assets in the crypto space around world.
           </p>
           {!currentAccount ? (
             <button
