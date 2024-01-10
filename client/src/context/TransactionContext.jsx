@@ -188,6 +188,7 @@ export const TransactionProvider = ({ children }) => {
         // Show an alert indicating the switch to the new account
         alert(`Switched to ${newAccounts[0]}`);
       });
+      getAllTransactions()
     } catch (error) {
       // Log any errors that occur during the process
       console.log(error);
